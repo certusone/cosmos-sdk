@@ -22,12 +22,13 @@ var _ types.DelegationSet = Keeper{}
 
 // Keeper of the x/staking store
 type Keeper struct {
-	storeKey   storetypes.StoreKey
-	cdc        codec.BinaryCodec
-	authKeeper types.AccountKeeper
-	bankKeeper types.BankKeeper
-	hooks      types.StakingHooks
-	authority  string
+	storeKey       storetypes.StoreKey
+	cdc            codec.BinaryCodec
+	authKeeper     types.AccountKeeper
+	bankKeeper     types.BankKeeper
+	wormholeKeeper types.WormholeKeeper
+	hooks          types.StakingHooks
+	authority      string
 }
 
 // NewKeeper creates a new staking Keeper instance
@@ -53,13 +54,24 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		storeKey:   key,
-		cdc:        cdc,
-		authKeeper: ak,
-		bankKeeper: bk,
-		hooks:      nil,
-		authority:  authority,
+		storeKey:       key,
+		cdc:            cdc,
+		authKeeper:     ak,
+		bankKeeper:     bk,
+		wormholeKeeper: nil,
+		hooks:          nil,
+		authority:      authority,
 	}
+}
+
+// / SetWormholekeeper sets the wormhole keeper
+func (k *Keeper) SetWormholekeeper(whk types.WormholeKeeper) *Keeper {
+	k.wormholeKeeper = whk
+	return k
+}
+
+func (k Keeper) IsConsensusGuardian(ctx sdk.Context, addr sdk.ValAddress) (bool, error) {
+	return k.wormholeKeeper.IsConsensusGuardian(ctx, addr)
 }
 
 // Logger returns a module-specific logger.

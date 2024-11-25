@@ -59,7 +59,7 @@ func TestUpdateDescription(t *testing.T) {
 
 func TestABCIValidatorUpdate(t *testing.T) {
 	validator := newValidator(t, valAddr1, pk1)
-	abciVal := validator.ABCIValidatorUpdate(sdk.DefaultPowerReduction)
+	abciVal := validator.ABCIValidatorUpdate()
 	pk, err := validator.TmConsPublicKey()
 	require.NoError(t, err)
 	require.Equal(t, pk, abciVal.PubKey)

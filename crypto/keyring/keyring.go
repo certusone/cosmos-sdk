@@ -987,7 +987,7 @@ func (ks keystore) migrate(key string) (*Record, error) {
 		return nil, fmt.Errorf("unable to set keyring.Item, err: %w", err)
 	}
 
-	fmt.Printf("Successfully migrated key %s.\n", key)
+	fmt.Fprintf(os.Stderr, "Successfully migrated key %s.\n", key)
 
 	return k, nil
 }

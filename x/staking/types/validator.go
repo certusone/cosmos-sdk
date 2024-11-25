@@ -58,7 +58,7 @@ func NewValidator(operator sdk.ValAddress, pubKey cryptotypes.PubKey, descriptio
 		UnbondingHeight:         int64(0),
 		UnbondingTime:           time.Unix(0, 0).UTC(),
 		Commission:              NewCommission(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec()),
-		MinSelfDelegation:       math.OneInt(),
+		MinSelfDelegation:       math.ZeroInt(),
 		UnbondingOnHoldRefCount: 0,
 	}, nil
 }
@@ -267,7 +267,9 @@ func (d Description) EnsureLength() (Description, error) {
 
 // ABCIValidatorUpdate returns an abci.ValidatorUpdate from a staking validator type
 // with the full validator power
-func (v Validator) ABCIValidatorUpdate(r math.Int) abci.ValidatorUpdate {
+// Implements Proof of Authority, which can be thought of as a binary staking
+// model (either have consensus power, or not)
+func (v Validator) ABCIValidatorUpdate() abci.ValidatorUpdate {
 	tmProtoPk, err := v.TmConsPublicKey()
 	if err != nil {
 		panic(err)
@@ -275,7 +277,7 @@ func (v Validator) ABCIValidatorUpdate(r math.Int) abci.ValidatorUpdate {
 
 	return abci.ValidatorUpdate{
 		PubKey: tmProtoPk,
-		Power:  v.ConsensusPower(r),
+		Power:  1,
 	}
 }
 
@@ -314,17 +316,26 @@ func (v Validator) InvalidExRate() bool {
 
 // calculate the token worth of provided shares
 func (v Validator) TokensFromShares(shares sdk.Dec) math.LegacyDec {
+	if v.DelegatorShares.IsZero() {
+		return math.LegacyZeroDec()
+	}
 	return (shares.MulInt(v.Tokens)).Quo(v.DelegatorShares)
 }
 
 // calculate the token worth of provided shares, truncated
 func (v Validator) TokensFromSharesTruncated(shares sdk.Dec) math.LegacyDec {
+	if v.DelegatorShares.IsZero() {
+		return sdk.Dec(sdk.ZeroInt())
+	}
 	return (shares.MulInt(v.Tokens)).QuoTruncate(v.DelegatorShares)
 }
 
 // TokensFromSharesRoundUp returns the token worth of provided shares, rounded
 // up.
 func (v Validator) TokensFromSharesRoundUp(shares sdk.Dec) math.LegacyDec {
+	if v.DelegatorShares.IsZero() {
+		return sdk.Dec(sdk.ZeroInt())
+	}
 	return (shares.MulInt(v.Tokens)).QuoRoundUp(v.DelegatorShares)
 }
 

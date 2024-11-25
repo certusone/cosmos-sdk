@@ -46,7 +46,7 @@ func (s *KeeperTestSuite) TestValidator() {
 	updates := s.applyValidatorSetUpdates(ctx, keeper, 1)
 	validator, found := keeper.GetValidator(ctx, valAddr)
 	require.True(found)
-	require.Equal(validator.ABCIValidatorUpdate(keeper.PowerReduction(ctx)), updates[0])
+	require.Equal(validator.ABCIValidatorUpdate(), updates[0])
 
 	// after the save the validator should be bonded
 	require.Equal(stakingtypes.Bonded, validator.Status)
@@ -263,8 +263,8 @@ func (s *KeeperTestSuite) TestApplyAndReturnValidatorSetUpdatesPowerDecrease() {
 
 	// Tendermint updates should reflect power change
 	updates := s.applyValidatorSetUpdates(ctx, keeper, 2)
-	require.Equal(validators[0].ABCIValidatorUpdate(keeper.PowerReduction(ctx)), updates[0])
-	require.Equal(validators[1].ABCIValidatorUpdate(keeper.PowerReduction(ctx)), updates[1])
+	require.Equal(validators[0].ABCIValidatorUpdate(), updates[0])
+	require.Equal(validators[1].ABCIValidatorUpdate(), updates[1])
 }
 
 func (s *KeeperTestSuite) TestUpdateValidatorCommission() {

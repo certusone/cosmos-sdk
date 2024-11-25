@@ -102,9 +102,10 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper        *keeper.Keeper
-	accountKeeper types.AccountKeeper
-	bankKeeper    types.BankKeeper
+	keeper         *keeper.Keeper
+	accountKeeper  types.AccountKeeper
+	bankKeeper     types.BankKeeper
+	wormholeKeeper types.WormholeKeeper
 
 	// legacySubspace is used solely for migration of x/params managed parameters
 	legacySubspace exported.Subspace
@@ -123,8 +124,15 @@ func NewAppModule(
 		keeper:         keeper,
 		accountKeeper:  ak,
 		bankKeeper:     bk,
+		wormholeKeeper: nil,
 		legacySubspace: ls,
 	}
+}
+
+// SetWormholeKeeper sets the wormhole keeper
+func (am AppModule) SetWormholeKeeper(whk types.WormholeKeeper) AppModule {
+	am.wormholeKeeper = whk
+	return am
 }
 
 var _ appmodule.AppModule = AppModule{}
@@ -169,7 +177,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 
 	cdc.MustUnmarshalJSON(data, &genesisState)
 
-	return am.keeper.InitGenesis(ctx, &genesisState)
+	return InitGenesis(ctx, *am.keeper, am.accountKeeper, am.bankKeeper, am.wormholeKeeper, &genesisState)
 }
 
 // ExportGenesis returns the exported genesis state as raw bytes for the staking
@@ -203,11 +211,12 @@ func init() {
 type StakingInputs struct {
 	depinject.In
 
-	Config        *modulev1.Module
-	AccountKeeper types.AccountKeeper
-	BankKeeper    types.BankKeeper
-	Cdc           codec.Codec
-	Key           *store.KVStoreKey
+	Config         *modulev1.Module
+	AccountKeeper  types.AccountKeeper
+	BankKeeper     types.BankKeeper
+	WormholeKeeper types.WormholeKeeper
+	Cdc            codec.Codec
+	Key            *store.KVStoreKey
 
 	// LegacySubspace is used solely for migration of x/params managed parameters
 	LegacySubspace exported.Subspace `optional:"true"`
@@ -234,8 +243,10 @@ func ProvideModule(in StakingInputs) StakingOutputs {
 		in.AccountKeeper,
 		in.BankKeeper,
 		authority.String(),
-	)
+	).SetWormholekeeper(in.WormholeKeeper)
+
 	m := NewAppModule(in.Cdc, k, in.AccountKeeper, in.BankKeeper, in.LegacySubspace)
+	m.SetWormholeKeeper(in.WormholeKeeper)
 	return StakingOutputs{StakingKeeper: k, Module: m}
 }
 
